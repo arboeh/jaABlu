@@ -1,23 +1,23 @@
 /**
  * Jaalee JHT Parser for Shelly BLU Gateway with MQTT Home Assistant Integration
- * 
+ *
  * Parses iBeacon-format temperature and humidity data from Jaalee JHT sensors
  * and publishes to Home Assistant via MQTT Auto-Discovery.
- * 
+ *
  * @version     1.1.0
  * @date        2025-11-17
  * @author      arboeh
  * @email       arend.boehmer@web.de
  * @license     MIT
  * @repository  https://github.com/arboeh/jaalee-shelly-mqtt
- * 
+ *
  * Changelog:
  *   v1.1.0 (2025-11-17)
  *     - Added configurable log levels (ERROR, WARN, INFO, DEBUG)
  *     - Fixed Last Seen timestamp format (ISO 8601 UTC)
  *     - Improved sensor detection and parsing
- *     - Added diagnostic entities (disabled by default)
- * 
+ *     - Added diagnostic entities (Battery always enabled, RSSI/Last Seen optional)
+ *
  *   v1.0.0 (2025-11-17)
  *     - Initial release
  *     - Support for Jaalee JHT sensors
@@ -77,8 +77,12 @@ const CONFIG = {
     enabled: true,
     discovery_prefix: "homeassistant", // Standard HA Discovery Prefix
     device_prefix: "jaalee", // Prefix for MQTT topics
-    publish_rssi: true, // Optional: Publish RSSI sensor (set to false to disable)
-    publish_last_seen: true // Optional: Publish last_seen timestamp (set to false to disable)
+
+    // Optional diagnostic sensors (disabled by default, user must enable)
+    publish_rssi: true, // Signal strength (RSSI in dBm)
+    publish_last_seen: true // Last seen timestamp (for timeout monitoring)
+
+    // Note: Battery is always published as diagnostic sensor but enabled by default
   },
   knownDevices: {
     // Optional: Format: "mac-address": "friendly_name"
@@ -142,7 +146,7 @@ function publishDiscovery(mac, friendlyName) {
     via_device: deviceInfo.id
   };
 
-  // Temperature Sensor Discovery
+  // Temperature Sensor Discovery (Primary - always visible)
   const tempConfig = {
     name: "Temperature",
     unique_id: deviceId + "_temperature",
@@ -160,7 +164,7 @@ function publishDiscovery(mac, friendlyName) {
     0,
     true);
 
-  // Humidity Sensor Discovery
+  // Humidity Sensor Discovery (Primary - always visible)
   const humiConfig = {
     name: "Humidity",
     unique_id: deviceId + "_humidity",
@@ -178,7 +182,7 @@ function publishDiscovery(mac, friendlyName) {
     0,
     true);
 
-  // Battery Sensor Discovery
+  // Battery Sensor Discovery (Diagnostic - always enabled)
   const battConfig = {
     name: "Battery",
     unique_id: deviceId + "_battery",
@@ -187,6 +191,8 @@ function publishDiscovery(mac, friendlyName) {
     unit_of_measurement: "%",
     device_class: "battery",
     state_class: "measurement",
+    entity_category: "diagnostic", // Marked as diagnostic
+    enabled_by_default: true, // But always enabled
     device: device
   };
 
@@ -196,7 +202,7 @@ function publishDiscovery(mac, friendlyName) {
     0,
     true);
 
-  // RSSI Sensor Discovery (optional, disabled by default in HA)
+  // RSSI Sensor Discovery (Diagnostic - optional, disabled by default)
   if (CONFIG.mqtt.publish_rssi) {
     const rssiConfig = {
       name: "Signal Strength",
@@ -207,7 +213,7 @@ function publishDiscovery(mac, friendlyName) {
       device_class: "signal_strength",
       state_class: "measurement",
       entity_category: "diagnostic",
-      enabled_by_default: false,
+      enabled_by_default: false, // Disabled by default
       device: device
     };
 
@@ -218,7 +224,7 @@ function publishDiscovery(mac, friendlyName) {
       true);
   }
 
-  // Last Seen Sensor Discovery (optional, disabled by default in HA)
+  // Last Seen Sensor Discovery (Diagnostic - optional, disabled by default)
   if (CONFIG.mqtt.publish_last_seen) {
     const lastSeenConfig = {
       name: "Last Seen",
@@ -227,7 +233,7 @@ function publishDiscovery(mac, friendlyName) {
       value_template: "{{ value_json.last_seen }}",
       device_class: "timestamp",
       entity_category: "diagnostic",
-      enabled_by_default: false,
+      enabled_by_default: false, // Disabled by default
       device: device
     };
 
@@ -255,7 +261,7 @@ function publishSensorData(mac, data) {
   const payload = {
     temperature: data.temperature,
     humidity: data.humidity,
-    battery: data.battery
+    battery: data.battery // Always included
   };
 
   // Add optional fields based on configuration
@@ -531,7 +537,7 @@ function init() {
     LOGGER.level === LOG_LEVELS.INFO ? "INFO" :
     LOGGER.level === LOG_LEVELS.WARN ? "WARN" : "ERROR";
 
-  LOGGER.info("Jaalee JHT parser initialized (v1.1)");
+  LOGGER.info("Jaalee JHT parser initialized (v1.1.0)");
   LOGGER.info("Log level: " + levelName);
   LOGGER.info("Optional sensors - RSSI: " + CONFIG.mqtt.publish_rssi +
     ", Last Seen: " + CONFIG.mqtt.publish_last_seen);

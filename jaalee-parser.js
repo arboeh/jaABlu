@@ -18,7 +18,6 @@ const CONFIG = {
   },
   knownDevices: {
     // Optional: Format: "mac-adresse": "friendly_name"
-    "c5:c7:14:4d:2b:35": "Jaalee JHT"
   }
 };
 /******************* END CONFIGURATION *******************/

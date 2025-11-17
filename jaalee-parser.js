@@ -17,7 +17,10 @@ const CONFIG = {
     publish_last_seen: true // Optional: Publish last_seen timestamp (set to false to disable)
   },
   knownDevices: {
-    // Optional: Format: "mac-adresse": "friendly_name"
+    // Optional: Format: "mac-address": "friendly_name"
+    // Examples:
+    // "aa:bb:cc:dd:ee:ff": "Living Room",
+    // "11:22:33:44:55:66": "Bedroom"
   }
 };
 /******************* END CONFIGURATION *******************/

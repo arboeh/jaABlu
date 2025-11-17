@@ -1,10 +1,28 @@
 /**
  * Jaalee JHT Parser for Shelly BLU Gateway with MQTT Home Assistant Integration
+ * 
  * Parses iBeacon-format temperature and humidity data from Jaalee JHT sensors
- * and publishes to Home Assistant via MQTT Auto-Discovery
- *
- * Version: 1.1
- * Repository: https://github.com/arboeh/jaalee-shelly-mqtt
+ * and publishes to Home Assistant via MQTT Auto-Discovery.
+ * 
+ * @version     1.1.0
+ * @date        2025-11-17
+ * @author      arboeh
+ * @email       arend.boehmer@web.de
+ * @license     MIT
+ * @repository  https://github.com/arboeh/jaalee-shelly-mqtt
+ * 
+ * Changelog:
+ *   v1.1.0 (2025-11-17)
+ *     - Added configurable log levels (ERROR, WARN, INFO, DEBUG)
+ *     - Fixed Last Seen timestamp format (ISO 8601 UTC)
+ *     - Improved sensor detection and parsing
+ *     - Added diagnostic entities (disabled by default)
+ * 
+ *   v1.0.0 (2025-11-17)
+ *     - Initial release
+ *     - Support for Jaalee JHT sensors
+ *     - MQTT Auto-Discovery integration
+ *     - Multi-sensor support
  */
 
 /******************* LOGGING SYSTEM *******************/

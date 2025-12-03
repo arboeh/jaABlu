@@ -4,18 +4,14 @@
  * Parses iBeacon-format temperature and humidity data from Jaalee JHT sensors
  * and publishes to Home Assistant via MQTT Auto-Discovery.
  *
- * @version     1.1.1
- * @date        2025-11-25
+ * @version     1.1.0
+ * @date        2025-11-17
  * @author      arboeh
  * @email       arend.boehmer@web.de
  * @license     MIT
  * @repository  https://github.com/arboeh/jaalee-shelly-mqtt
  *
  * Changelog:
- *   v1.1.1 (2025-11-25)
- *     - Fixed Array.reverse() compatibility issue with Shelly mJS
- *     - Replaced reverse() call with manual loop in parseShortFormat
- *
  *   v1.1.0 (2025-11-17)
  *     - Added configurable log levels (ERROR, WARN, INFO, DEBUG)
  *     - Fixed Last Seen timestamp format (ISO 8601 UTC)
@@ -84,9 +80,10 @@ const CONFIG = {
 
     // Optional diagnostic sensors (disabled by default, user must enable)
     publish_rssi: true, // Signal strength (RSSI in dBm)
-    publish_last_seen: true // Last seen timestamp (for timeout monitoring)
+    publish_last_seen: true, // Last seen timestamp (for timeout monitoring)
 
-    // Note: Battery is always published as diagnostic sensor but enabled by default
+    // NEU: Status & Timeout
+    sensor_timeout: 300 // Sekunden ohne Update -> offline (5 min)
   },
   knownDevices: {
     // Optional: Format: "mac-address": "friendly_name"
@@ -104,6 +101,7 @@ const JAALEE_UUID_MARKER = [0xF5, 0x25];
 
 // Tracking for Discovery (publish only once per device)
 let discoveredDevices = {};
+let lastSeenTimestamps = {};
 
 // Helper: MAC address formatting for topics (no RegEx, Shelly mJS compatible)
 function formatMacForTopic(mac) {
@@ -127,6 +125,20 @@ function getTimestamp() {
   return now.toISOString();
 }
 
+function getUnixTimestamp() {
+  return Math.floor(Date.now() / 1000);
+}
+
+function publishStatus(mac, status) {
+  if (!MQTT.isConnected()) return;
+
+  const macClean = formatMacForTopic(mac);
+  const statusTopic = CONFIG.mqtt.device_prefix + "/" + macClean + "/status";
+  
+  MQTT.publish(statusTopic, status, 0, true); // retained
+  LOGGER.debug("Published status '" + status + "' for: " + mac);
+}
+
 // MQTT Discovery for Home Assistant
 function publishDiscovery(mac, friendlyName) {
   if (!MQTT.isConnected()) {
@@ -137,6 +149,7 @@ function publishDiscovery(mac, friendlyName) {
   const macClean = formatMacForTopic(mac);
   const deviceId = CONFIG.mqtt.device_prefix + "_" + macClean;
   const deviceName = friendlyName || ("Jaalee JHT " + mac);
+  const availabilityTopic = CONFIG.mqtt.device_prefix + "/" + macClean + "/status";
 
   // Device Info (shared by all entities)
   const deviceInfo = Shelly.getDeviceInfo();
@@ -157,6 +170,9 @@ function publishDiscovery(mac, friendlyName) {
     unit_of_measurement: "°C",
     device_class: "temperature",
     state_class: "measurement",
+    availability_topic: availabilityTopic,
+    payload_available: "online",
+    payload_not_available: "offline",
     device: device
   };
 
@@ -175,6 +191,9 @@ function publishDiscovery(mac, friendlyName) {
     unit_of_measurement: "%",
     device_class: "humidity",
     state_class: "measurement",
+    availability_topic: availabilityTopic,
+    payload_available: "online",
+    payload_not_available: "offline",
     device: device
   };
 
@@ -195,6 +214,9 @@ function publishDiscovery(mac, friendlyName) {
     state_class: "measurement",
     entity_category: "diagnostic", // Marked as diagnostic
     enabled_by_default: true, // But always enabled
+    availability_topic: availabilityTopic,
+    payload_available: "online",
+    payload_not_available: "offline",
     device: device
   };
 
@@ -216,6 +238,9 @@ function publishDiscovery(mac, friendlyName) {
       state_class: "measurement",
       entity_category: "diagnostic",
       enabled_by_default: false, // Disabled by default
+      availability_topic: availabilityTopic,
+      payload_available: "online",
+      payload_not_available: "offline",
       device: device
     };
 
@@ -236,6 +261,9 @@ function publishDiscovery(mac, friendlyName) {
       device_class: "timestamp",
       entity_category: "diagnostic",
       enabled_by_default: false, // Disabled by default
+      availability_topic: availabilityTopic,
+      payload_available: "online",
+      payload_not_available: "offline",
       device: device
     };
 
@@ -297,10 +325,36 @@ function emitJaaleeData(data) {
       discoveredDevices[data.address] = true;
     }
 
+    // Update last seen timestamp und Status
+    lastSeenTimestamps[data.address] = getUnixTimestamp();
+    publishStatus(data.address, "online");
+
     // Publish sensor data
     publishSensorData(data.address, data);
   }
 }
+
+// NEU: Timeout-Überwachung (prüft periodisch alle Sensoren)
+function checkSensorTimeouts() {
+  const now = getUnixTimestamp();
+  const timeout = CONFIG.mqtt.sensor_timeout;
+
+  for (let mac in lastSeenTimestamps) {
+    const lastSeen = lastSeenTimestamps[mac];
+    const diff = now - lastSeen;
+
+    if (diff > timeout) {
+      publishStatus(mac, "offline");
+      LOGGER.warn("Sensor timeout: " + mac + " (no data for " + diff + "s)");
+      
+      // Optional: Nur einmal melden, dann aus lastSeenTimestamps entfernen
+      // delete lastSeenTimestamps[mac];
+    }
+  }
+}
+
+// NEU: Timer für Timeout-Überwachung (alle 60 Sekunden prüfen)
+Timer.set(60000, true, checkSensorTimeouts);
 
 // Jaalee Decoder with corrected iBeacon parsing
 const JaaleeDecoder = {

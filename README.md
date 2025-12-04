@@ -87,8 +87,9 @@ The script can be configured through the `CONFIG` object:
 
         logLevel: LOG_LEVELS.DEBUG
 
-- Use an MQTT tool (e.g. MQTT Explorer) to check for topics like  
-`homeassistant/sensor/jaalee_*/config`.
+- Use an MQTT tool (e.g. MQTT Explorer) to check for topics like
+
+        `homeassistant/sensor/jaalee_*/config`.
 
 ## Logs (DEBUG mode)
 

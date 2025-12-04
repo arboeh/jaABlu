@@ -4,14 +4,18 @@
  * Parses iBeacon-format temperature and humidity data from Jaalee JHT sensors
  * and publishes to Home Assistant via MQTT Auto-Discovery.
  *
- * @version     1.2.0
- * @date        2025-12-03
+ * @version     1.2.1
+ * @date        2025-12-04
  * @author      arboeh
  * @email       arend.boehmer@web.de
  * @license     MIT
  * @repository  https://github.com/arboeh/jaalee-shelly-mqtt
  *
  * Changelog:
+ *   v1.2.1 (2025-12-04)
+ *     - Fixed MQTT discovery timing issue by adding connection check before publishing
+ *     - Discovery messages now only sent when MQTT is confirmed connected
+ *
  *   v1.2.0 (2025-12-03)
  *     - Added per-sensor online/offline status topic (retained) for availability
  *     - Added availability to Home Assistant discovery entities (availability_topic, payloads)
@@ -36,7 +40,7 @@ const LOG_LEVELS = {
   ERROR: 0,
   WARN: 1,
   INFO: 2,
-  DEBUG: 3
+  DEBUG: 3,
 };
 
 // Logger configuration
@@ -45,33 +49,33 @@ const LOGGER = {
 
   error: function (message) {
     if (this.level >= LOG_LEVELS.ERROR) {
-      console.log("[ERROR]", message);
+      console.log('[ERROR]', message);
     }
   },
 
   warn: function (message) {
     if (this.level >= LOG_LEVELS.WARN) {
-      console.log("[WARN]", message);
+      console.log('[WARN]', message);
     }
   },
 
   info: function (message) {
     if (this.level >= LOG_LEVELS.INFO) {
-      console.log("[INFO]", message);
+      console.log('[INFO]', message);
     }
   },
 
   debug: function (message) {
     if (this.level >= LOG_LEVELS.DEBUG) {
-      console.log("[DEBUG]", message);
+      console.log('[DEBUG]', message);
     }
-  }
+  },
 };
 /******************* END LOGGING *******************/
 
 /******************* CONFIGURATION *******************/
 const CONFIG = {
-  eventName: "jaalee-jht",
+  eventName: 'jaalee-jht',
   active: true, // Active scan required for Jaalee devices
 
   // Log levels: ERROR=0, WARN=1, INFO=2, DEBUG=3
@@ -81,20 +85,20 @@ const CONFIG = {
 
   mqtt: {
     enabled: true,
-    discovery_prefix: "homeassistant", // Standard HA Discovery Prefix
-    device_prefix: "jaalee", // Prefix for MQTT topics
+    discovery_prefix: 'homeassistant', // Standard HA Discovery Prefix
+    device_prefix: 'jaalee', // Prefix for MQTT topics
 
     // Optional diagnostic sensors (disabled by default, user must enable)
     publish_rssi: true, // Signal strength (RSSI in dBm)
     publish_last_seen: true, // Last seen timestamp (for timeout monitoring)
 
     // NEU: Status & Timeout
-    sensor_timeout: 300 // Sekunden ohne Update -> offline (5 min)
+    sensor_timeout: 300, // Sekunden ohne Update -> offline (5 min)
   },
   knownDevices: {
     // Optional: Format: "mac-address": "friendly_name"
-    "XX:XX:XX:XX:XX:XX": "Jaalee JHT"
-  }
+    'XX:XX:XX:XX:XX:XX': 'Jaalee JHT',
+  },
 };
 
 // Apply log level from config
@@ -102,8 +106,8 @@ LOGGER.level = CONFIG.logLevel;
 /******************* END CONFIGURATION *******************/
 
 // Jaalee-specific constants
-const IBEACON_PREFIX = [0xFF, 0x4C, 0x00];
-const JAALEE_UUID_MARKER = [0xF5, 0x25];
+const IBEACON_PREFIX = [0xff, 0x4c, 0x00];
+const JAALEE_UUID_MARKER = [0xf5, 0x25];
 
 // Tracking for Discovery (publish only once per device)
 let discoveredDevices = {};
@@ -111,11 +115,10 @@ let lastSeenTimestamps = {};
 
 // Helper: MAC address formatting for topics (no RegEx, Shelly mJS compatible)
 function formatMacForTopic(mac) {
-  if (!mac)
-    return "";
+  if (!mac) return '';
 
   const parts = mac.split(':');
-  let result = "";
+  let result = '';
   for (let i = 0; i < parts.length; i++) {
     result += parts[i].toLowerCase();
   }
@@ -139,8 +142,8 @@ function publishStatus(mac, status) {
   if (!MQTT.isConnected()) return;
 
   const macClean = formatMacForTopic(mac);
-  const statusTopic = CONFIG.mqtt.device_prefix + "/" + macClean + "/status";
-  
+  const statusTopic = CONFIG.mqtt.device_prefix + '/' + macClean + '/status';
+
   MQTT.publish(statusTopic, status, 0, true); // retained
   LOGGER.debug("Published status '" + status + "' for: " + mac);
 }
@@ -148,156 +151,161 @@ function publishStatus(mac, status) {
 // MQTT Discovery for Home Assistant
 function publishDiscovery(mac, friendlyName) {
   if (!MQTT.isConnected()) {
-    LOGGER.warn("MQTT not connected, skipping discovery");
+    LOGGER.warn('MQTT not connected, skipping discovery');
     return;
   }
 
   const macClean = formatMacForTopic(mac);
-  const deviceId = CONFIG.mqtt.device_prefix + "_" + macClean;
-  const deviceName = friendlyName || ("Jaalee JHT " + mac);
-  const availabilityTopic = CONFIG.mqtt.device_prefix + "/" + macClean + "/status";
+  const deviceId = CONFIG.mqtt.device_prefix + '_' + macClean;
+  const deviceName = friendlyName || 'Jaalee JHT ' + mac;
+  const availabilityTopic = CONFIG.mqtt.device_prefix + '/' + macClean + '/status';
 
   // Device Info (shared by all entities)
   const deviceInfo = Shelly.getDeviceInfo();
   const device = {
     identifiers: [deviceId],
     name: deviceName,
-    model: "Jaalee JHT",
-    manufacturer: "Jaalee",
-    via_device: deviceInfo.id
+    model: 'Jaalee JHT',
+    manufacturer: 'Jaalee',
+    via_device: deviceInfo.id,
   };
 
   // Temperature Sensor Discovery (Primary - always visible)
   const tempConfig = {
-    name: "Temperature",
-    unique_id: deviceId + "_temperature",
-    state_topic: CONFIG.mqtt.device_prefix + "/" + macClean + "/state",
-    value_template: "{{ value_json.temperature }}",
-    unit_of_measurement: "°C",
-    device_class: "temperature",
-    state_class: "measurement",
+    name: 'Temperature',
+    unique_id: deviceId + '_temperature',
+    state_topic: CONFIG.mqtt.device_prefix + '/' + macClean + '/state',
+    value_template: '{{ value_json.temperature }}',
+    unit_of_measurement: '°C',
+    device_class: 'temperature',
+    state_class: 'measurement',
     availability_topic: availabilityTopic,
-    payload_available: "online",
-    payload_not_available: "offline",
-    device: device
+    payload_available: 'online',
+    payload_not_available: 'offline',
+    device: device,
   };
 
   MQTT.publish(
-    CONFIG.mqtt.discovery_prefix + "/sensor/" + deviceId + "_temperature/config",
+    CONFIG.mqtt.discovery_prefix + '/sensor/' + deviceId + '_temperature/config',
     JSON.stringify(tempConfig),
     0,
-    true);
+    true
+  );
 
   // Humidity Sensor Discovery (Primary - always visible)
   const humiConfig = {
-    name: "Humidity",
-    unique_id: deviceId + "_humidity",
-    state_topic: CONFIG.mqtt.device_prefix + "/" + macClean + "/state",
-    value_template: "{{ value_json.humidity }}",
-    unit_of_measurement: "%",
-    device_class: "humidity",
-    state_class: "measurement",
+    name: 'Humidity',
+    unique_id: deviceId + '_humidity',
+    state_topic: CONFIG.mqtt.device_prefix + '/' + macClean + '/state',
+    value_template: '{{ value_json.humidity }}',
+    unit_of_measurement: '%',
+    device_class: 'humidity',
+    state_class: 'measurement',
     availability_topic: availabilityTopic,
-    payload_available: "online",
-    payload_not_available: "offline",
-    device: device
+    payload_available: 'online',
+    payload_not_available: 'offline',
+    device: device,
   };
 
   MQTT.publish(
-    CONFIG.mqtt.discovery_prefix + "/sensor/" + deviceId + "_humidity/config",
+    CONFIG.mqtt.discovery_prefix + '/sensor/' + deviceId + '_humidity/config',
     JSON.stringify(humiConfig),
     0,
-    true);
+    true
+  );
 
   // Battery Sensor Discovery (Diagnostic - always enabled)
   const battConfig = {
-    name: "Battery",
-    unique_id: deviceId + "_battery",
-    state_topic: CONFIG.mqtt.device_prefix + "/" + macClean + "/state",
-    value_template: "{{ value_json.battery }}",
-    unit_of_measurement: "%",
-    device_class: "battery",
-    state_class: "measurement",
-    entity_category: "diagnostic", // Marked as diagnostic
+    name: 'Battery',
+    unique_id: deviceId + '_battery',
+    state_topic: CONFIG.mqtt.device_prefix + '/' + macClean + '/state',
+    value_template: '{{ value_json.battery }}',
+    unit_of_measurement: '%',
+    device_class: 'battery',
+    state_class: 'measurement',
+    entity_category: 'diagnostic', // Marked as diagnostic
     enabled_by_default: true, // But always enabled
     availability_topic: availabilityTopic,
-    payload_available: "online",
-    payload_not_available: "offline",
-    device: device
+    payload_available: 'online',
+    payload_not_available: 'offline',
+    device: device,
   };
 
   MQTT.publish(
-    CONFIG.mqtt.discovery_prefix + "/sensor/" + deviceId + "_battery/config",
+    CONFIG.mqtt.discovery_prefix + '/sensor/' + deviceId + '_battery/config',
     JSON.stringify(battConfig),
     0,
-    true);
+    true
+  );
 
   // RSSI Sensor Discovery (Diagnostic - optional, disabled by default)
   if (CONFIG.mqtt.publish_rssi) {
     const rssiConfig = {
-      name: "Signal Strength",
-      unique_id: deviceId + "_rssi",
-      state_topic: CONFIG.mqtt.device_prefix + "/" + macClean + "/state",
-      value_template: "{{ value_json.rssi }}",
-      unit_of_measurement: "dBm",
-      device_class: "signal_strength",
-      state_class: "measurement",
-      entity_category: "diagnostic",
+      name: 'Signal Strength',
+      unique_id: deviceId + '_rssi',
+      state_topic: CONFIG.mqtt.device_prefix + '/' + macClean + '/state',
+      value_template: '{{ value_json.rssi }}',
+      unit_of_measurement: 'dBm',
+      device_class: 'signal_strength',
+      state_class: 'measurement',
+      entity_category: 'diagnostic',
       enabled_by_default: false, // Disabled by default
       availability_topic: availabilityTopic,
-      payload_available: "online",
-      payload_not_available: "offline",
-      device: device
+      payload_available: 'online',
+      payload_not_available: 'offline',
+      device: device,
     };
 
     MQTT.publish(
-      CONFIG.mqtt.discovery_prefix + "/sensor/" + deviceId + "_rssi/config",
+      CONFIG.mqtt.discovery_prefix + '/sensor/' + deviceId + '_rssi/config',
       JSON.stringify(rssiConfig),
       0,
-      true);
+      true
+    );
   }
 
   // Last Seen Sensor Discovery (Diagnostic - optional, disabled by default)
   if (CONFIG.mqtt.publish_last_seen) {
     const lastSeenConfig = {
-      name: "Last Seen",
-      unique_id: deviceId + "_last_seen",
-      state_topic: CONFIG.mqtt.device_prefix + "/" + macClean + "/state",
-      value_template: "{{ value_json.last_seen }}",
-      device_class: "timestamp",
-      entity_category: "diagnostic",
+      name: 'Last Seen',
+      unique_id: deviceId + '_last_seen',
+      state_topic: CONFIG.mqtt.device_prefix + '/' + macClean + '/state',
+      value_template: '{{ value_json.last_seen }}',
+      device_class: 'timestamp',
+      entity_category: 'diagnostic',
       enabled_by_default: false, // Disabled by default
       availability_topic: availabilityTopic,
-      payload_available: "online",
-      payload_not_available: "offline",
-      device: device
+      payload_available: 'online',
+      payload_not_available: 'offline',
+      device: device,
     };
 
     MQTT.publish(
-      CONFIG.mqtt.discovery_prefix + "/sensor/" + deviceId + "_last_seen/config",
+      CONFIG.mqtt.discovery_prefix + '/sensor/' + deviceId + '_last_seen/config',
       JSON.stringify(lastSeenConfig),
       0,
-      true);
+      true
+    );
   }
 
-  LOGGER.info("MQTT Discovery published for: " + mac);
+  LOGGER.info('MQTT Discovery published for: ' + mac);
 }
 
 // Publish Sensor Data to MQTT
 function publishSensorData(mac, data) {
   if (!MQTT.isConnected()) {
-    LOGGER.warn("MQTT not connected, skipping publish");
+    LOGGER.warn('MQTT not connected, skipping publish');
     return;
   }
 
   const macClean = formatMacForTopic(mac);
-  const stateTopic = CONFIG.mqtt.device_prefix + "/" + macClean + "/state";
+  const stateTopic = CONFIG.mqtt.device_prefix + '/' + macClean + '/state';
 
   // Build payload with mandatory fields
   const payload = {
     temperature: data.temperature,
     humidity: data.humidity,
-    battery: data.battery // Always included
+    battery: data.battery, // Always included
   };
 
   // Add optional fields based on configuration
@@ -310,13 +318,12 @@ function publishSensorData(mac, data) {
   }
 
   MQTT.publish(stateTopic, JSON.stringify(payload), 0, false);
-  LOGGER.debug("Published sensor data to: " + stateTopic);
+  LOGGER.debug('Published sensor data to: ' + stateTopic);
 }
 
 // Emit parsed data
 function emitJaaleeData(data) {
-  if (typeof data !== "object")
-    return;
+  if (typeof data !== 'object') return;
 
   // Emit event for local use
   Shelly.emitEvent(CONFIG.eventName, data);
@@ -333,7 +340,7 @@ function emitJaaleeData(data) {
 
     // Update last seen timestamp und Status
     lastSeenTimestamps[data.address] = getUnixTimestamp();
-    publishStatus(data.address, "online");
+    publishStatus(data.address, 'online');
 
     // Publish sensor data
     publishSensorData(data.address, data);
@@ -350,9 +357,9 @@ function checkSensorTimeouts() {
     const diff = now - lastSeen;
 
     if (diff > timeout) {
-      publishStatus(mac, "offline");
-      LOGGER.warn("Sensor timeout: " + mac + " (no data for " + diff + "s)");
-      
+      publishStatus(mac, 'offline');
+      LOGGER.warn('Sensor timeout: ' + mac + ' (no data for ' + diff + 's)');
+
       // Optional: Nur einmal melden, dann aus lastSeenTimestamps entfernen
       // delete lastSeenTimestamps[mac];
     }
@@ -380,8 +387,7 @@ const JaaleeDecoder = {
 
   // Parse iBeacon format (24 bytes from manufacturer_data)
   parseLongFormat: function (data) {
-    if (data.length !== 24)
-      return null;
+    if (data.length !== 24) return null;
 
     // Check for iBeacon header (0x02 0x15)
     if (data.at(0) !== 0x02 || data.at(1) !== 0x15) {
@@ -392,7 +398,7 @@ const JaaleeDecoder = {
     // Different firmware versions place the marker at different positions
     let hasJaaleeMarker = false;
     for (let i = 2; i < 17; i++) {
-      if (data.at(i) === 0xF5 && data.at(i + 1) === 0x25) {
+      if (data.at(i) === 0xf5 && data.at(i + 1) === 0x25) {
         hasJaaleeMarker = true;
         break;
       }
@@ -405,11 +411,11 @@ const JaaleeDecoder = {
 
     // Extract temperature (bytes 18-19, big-endian)
     const tempRaw = this.getUInt16BE(data, 18);
-    const temperature = Math.round((175 * tempRaw / 65535 - 45) * 100) / 100;
+    const temperature = Math.round(((175 * tempRaw) / 65535 - 45) * 100) / 100;
 
     // Extract humidity (bytes 20-21, big-endian)
     const humiRaw = this.getUInt16BE(data, 20);
-    const humidity = Math.round((100 * humiRaw / 65535) * 100) / 100;
+    const humidity = Math.round(((100 * humiRaw) / 65535) * 100) / 100;
 
     // Extract battery (byte 23)
     const battery = data.at(23);
@@ -423,14 +429,13 @@ const JaaleeDecoder = {
       temperature: temperature,
       humidity: humidity,
       battery: battery,
-      format: "iBeacon-24"
+      format: 'iBeacon-24',
     };
   },
 
   // Parse short format (15-16 bytes)
   parseShortFormat: function (data, expectedMac) {
-    if (data.length < 15 || data.length > 16)
-      return null;
+    if (data.length < 15 || data.length > 16) return null;
 
     // Extract battery (byte 4)
     const battery = data.at(4);
@@ -452,18 +457,18 @@ const JaaleeDecoder = {
         }
       }
       if (!macMatch) {
-        LOGGER.debug("Jaalee: MAC address mismatch");
+        LOGGER.debug('Jaalee: MAC address mismatch');
         return null;
       }
     }
 
     // Extract temperature (last 4 bytes: -4 to -2, big-endian)
     const tempRaw = this.getUInt16BE(data, data.length - 4);
-    const temperature = Math.round((175 * tempRaw / 65535 - 45) * 100) / 100;
+    const temperature = Math.round(((175 * tempRaw) / 65535 - 45) * 100) / 100;
 
     // Extract humidity (last 2 bytes, big-endian)
     const humiRaw = this.getUInt16BE(data, data.length - 2);
-    const humidity = Math.round((100 * humiRaw / 65535) * 100) / 100;
+    const humidity = Math.round(((100 * humiRaw) / 65535) * 100) / 100;
 
     // Plausibility check
     if (temperature < -40 || temperature > 80 || humidity < 0 || humidity > 100) {
@@ -474,14 +479,13 @@ const JaaleeDecoder = {
       temperature: temperature,
       humidity: humidity,
       battery: battery,
-      format: "short"
+      format: 'short',
     };
   },
 
   // Main parsing function
   parse: function (advData, macAddress) {
-    if (!advData || advData.length === 0)
-      return null;
+    if (!advData || advData.length === 0) return null;
 
     // Try iBeacon format first (24 bytes)
     let result = this.parseLongFormat(advData);
@@ -496,29 +500,27 @@ const JaaleeDecoder = {
     }
 
     return null;
-  }
+  },
 };
 
 // BLE Scan Callback for Jaalee devices
 function JaaleeScanCallback(event, result) {
-  if (event !== BLE.Scanner.SCAN_RESULT)
-    return;
+  if (event !== BLE.Scanner.SCAN_RESULT) return;
 
   // Check if we have manufacturer data
   let advData = null;
 
-  if (typeof result.manufacturer_data !== "undefined") {
+  if (typeof result.manufacturer_data !== 'undefined') {
     for (let key in result.manufacturer_data) {
       advData = result.manufacturer_data[key];
       break;
     }
   }
 
-  if (!advData)
-    return;
+  if (!advData) return;
 
   // Debug: Show all BLE devices
-  LOGGER.debug("BLE Device: " + result.addr + " RSSI: " + result.rssi + " Data length: " + advData.length);
+  LOGGER.debug('BLE Device: ' + result.addr + ' RSSI: ' + result.rssi + ' Data length: ' + advData.length);
 
   // Convert MAC address string to byte array
   let macBytes = null;
@@ -538,17 +540,24 @@ function JaaleeScanCallback(event, result) {
   if (parsed) {
     parsed.rssi = result.rssi;
     parsed.address = result.addr;
-    parsed.model = "Jaalee JHT";
+    parsed.model = 'Jaalee JHT';
 
     // Info: Found Jaalee sensor
-    LOGGER.info("Jaalee JHT found - MAC: " + result.addr +
-      " | Temp: " + parsed.temperature + "°C" +
-      " | Humidity: " + parsed.humidity + "%");
+    LOGGER.info(
+      'Jaalee JHT found - MAC: ' +
+        result.addr +
+        ' | Temp: ' +
+        parsed.temperature +
+        '°C' +
+        ' | Humidity: ' +
+        parsed.humidity +
+        '%'
+    );
 
     // Debug: Detailed information
-    LOGGER.debug("Battery: " + parsed.battery + "% | " +
-      "RSSI: " + parsed.rssi + "dBm | " +
-      "Format: " + parsed.format);
+    LOGGER.debug(
+      'Battery: ' + parsed.battery + '% | ' + 'RSSI: ' + parsed.rssi + 'dBm | ' + 'Format: ' + parsed.format
+    );
 
     emitJaaleeData(parsed);
   }
@@ -556,38 +565,38 @@ function JaaleeScanCallback(event, result) {
 
 // Initialize the Jaalee parser
 function init() {
-  if (typeof CONFIG === "undefined") {
-    LOGGER.error("Undefined config");
+  if (typeof CONFIG === 'undefined') {
+    LOGGER.error('Undefined config');
     return;
   }
 
   // Check if Bluetooth is enabled
-  const BLEConfig = Shelly.getComponentConfig("ble");
+  const BLEConfig = Shelly.getComponentConfig('ble');
   if (!BLEConfig.enable) {
-    LOGGER.error("Bluetooth is not enabled");
+    LOGGER.error('Bluetooth is not enabled');
     return;
   }
 
   // Check MQTT connection if MQTT is enabled
   if (CONFIG.mqtt.enabled) {
     if (MQTT.isConnected()) {
-      LOGGER.info("MQTT connected");
+      LOGGER.info('MQTT connected');
     } else {
-      LOGGER.warn("MQTT not connected - check MQTT settings");
+      LOGGER.warn('MQTT not connected - check MQTT settings');
     }
   }
 
   // Start BLE Scanner
   if (BLE.Scanner.isRunning()) {
-    LOGGER.info("BLE scanner already running");
+    LOGGER.info('BLE scanner already running');
   } else {
     const bleScanner = BLE.Scanner.Start({
       duration_ms: BLE.Scanner.INFINITE_SCAN,
-      active: CONFIG.active
+      active: CONFIG.active,
     });
 
     if (!bleScanner) {
-      LOGGER.error("Cannot start BLE scanner");
+      LOGGER.error('Cannot start BLE scanner');
       return;
     }
   }
@@ -595,14 +604,18 @@ function init() {
   BLE.Scanner.Subscribe(JaaleeScanCallback);
 
   // Show startup info
-  const levelName = LOGGER.level === LOG_LEVELS.DEBUG ? "DEBUG" :
-    LOGGER.level === LOG_LEVELS.INFO ? "INFO" :
-    LOGGER.level === LOG_LEVELS.WARN ? "WARN" : "ERROR";
+  const levelName =
+    LOGGER.level === LOG_LEVELS.DEBUG
+      ? 'DEBUG'
+      : LOGGER.level === LOG_LEVELS.INFO
+      ? 'INFO'
+      : LOGGER.level === LOG_LEVELS.WARN
+      ? 'WARN'
+      : 'ERROR';
 
-  LOGGER.info("Jaalee JHT parser initialized (v1.1.0)");
-  LOGGER.info("Log level: " + levelName);
-  LOGGER.info("Optional sensors - RSSI: " + CONFIG.mqtt.publish_rssi +
-    ", Last Seen: " + CONFIG.mqtt.publish_last_seen);
+  LOGGER.info('Jaalee JHT parser initialized (v1.1.0)');
+  LOGGER.info('Log level: ' + levelName);
+  LOGGER.info('Optional sensors - RSSI: ' + CONFIG.mqtt.publish_rssi + ', Last Seen: ' + CONFIG.mqtt.publish_last_seen);
 }
 
 // Start the script

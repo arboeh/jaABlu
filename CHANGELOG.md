@@ -2,6 +2,13 @@
 
 Alle signifikanten Änderungen am Projekt werden hier dokumentiert.
 
+## [1.2.2] - 2025-12-04
+
+### Fixed
+
+- GitHub Actions release workflow permissions
+- Release process now works with `softprops/action-gh-release@v2`
+
 ## [1.2.1] - 2025-12-04
 
 ### Fixed

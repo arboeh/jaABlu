@@ -5,75 +5,101 @@
 [![Shelly](https://img.shields.io/badge/Shelly-BLU%20Gateway-00A0E3.svg)](https://shelly.cloud/)
 [![Version](https://img.shields.io/badge/Version-1.2.1-brightgreen.svg)](https://github.com/arboeh/jaalee-shelly-mqtt)
 
-Parse **Jaalee JHT** BLE temperature/humidity sensors using **Shelly BLU Gateway** devices as Bluetooth proxies and forward data to **Home Assistant** via **MQTT Auto-Discovery**.
+This script reads **Jaalee JHT** BLE temperature and humidity sensors using **Shelly BLU Gateway** devices as Bluetooth proxies and forwards the data to **Home Assistant** via **MQTT Auto-Discovery**.
 
 ## Features
 
-- ✅ **Full MQTT Auto-Discovery** - Sensors erscheinen automatisch in Home Assistant
-- ✅ **5 Sensors pro Gerät**: Temperature, Humidity, Battery, RSSI, Last Seen
-- ✅ **Online/Offline Status** - Automatische Erkennung bei 5min Timeout
-- ✅ **Multi-Sensor Support** - Unbegrenzt viele Jaalee JHT pro Gateway
-- ✅ **Configurable Logging** - DEBUG/INFO/WARN/ERROR Levels
-- ✅ **Active BLE Scanning** - Optimiert für Jaalee iBeacon-Format
+- ✅ **Full MQTT Auto-Discovery support** – sensors are created automatically in Home Assistant
+- ✅ **5 sensor entities per device**: Temperature, Humidity, Battery, RSSI, Last Seen
+- ✅ **Online/Offline status** – automatic detection via configurable timeout (default 5 minutes)
+- ✅ **Multi-sensor support** – any number of Jaalee JHT sensors per Shelly BLU Gateway
+- ✅ **Configurable logging** – DEBUG / INFO / WARN / ERROR
+- ✅ **Active BLE scanning** – optimized for the Jaalee iBeacon format
 
-## Voraussetzungen
+## Requirements
 
-- Shelly BLU Gateway (BLU Mini, BLU Pro, etc.) mit **Bluetooth aktiviert**
-- Home Assistant mit **MQTT Broker** (Mosquitto)
-- MQTT Discovery Prefix: `homeassistant` (Standard)
+- Shelly BLU Gateway (e.g. BLU Gateway, BLU Mini, BLU Pro) with **Bluetooth enabled**
+- Home Assistant with a running **MQTT broker** (e.g. Mosquitto)
+- MQTT Auto-Discovery enabled, Discovery prefix set to `homeassistant` (default)
 
 ## Installation
 
-1. **Script hochladen** auf dein Shelly BLU Gateway:
-2. **Bluetooth aktivieren**:
-3. **Script starten**:
-4. **Home Assistant**: Sensors erscheinen automatisch unter **MQTT Devices**
+1. **Upload the script to your Shelly BLU Gateway**
 
-## Konfiguration
+   In the web UI:
+   - `Settings → Scripts → Add script`
+   - Paste the contents of `jaalee-parser.js`
+   - Enable the script
+
+2. **Enable Bluetooth on the Shelly**
+
+   - `Settings → Bluetooth → Enable`
+
+3. **Start the script**
+
+   - `Settings → Scripts → jaalee-parser.js → Start`
+   - Optionally enable autostart for the script
+
+4. **Verify in Home Assistant**
+
+   - After a few seconds, new devices should appear under  
+     `Settings → Devices & Services → MQTT`.
+   - Each Jaalee sensor will expose several entities (Temperature, Humidity, Battery, etc.).
+
+## Configuration
+
+The script can be configured through the `CONFIG` object:
 
     const CONFIG = {
         mqtt: {
-            publish_rssi: true, // Signalstärke (dBm)
-            publish_last_seen: true, // Timestamp (ISO 8601)
-            sensor_timeout: 300 // Offline nach 5min
+            publish_rssi: true, // Signal strength (dBm) as diagnostic entity
+            publish_last_seen: true, // Last seen timestamp (ISO 8601)
+            sensor_timeout: 300 // Seconds without update -> offline (default: 5 minutes)
         },
         knownDevices: {
-            "aa:bb:cc:dd:ee:ff": "Wohnzimmer" // Friendly Names
+            "aa:bb:cc:dd:ee:ff": "Living Room" // Optional friendly names by MAC
         }
     };
 
 ## Home Assistant Entities
 
-| Entity | Typ | Device Class | Standard |
-|--------|-----|--------------|----------|
-| `sensor.jaalee_xxx_temperature` | Sensor | temperature | ✅ |
-| `sensor.jaalee_xxx_humidity` | Sensor | humidity | ✅ |
-| `sensor.jaalee_xxx_battery` | Sensor | battery | ✅ |
-| `sensor.jaalee_xxx_rssi` | Sensor | signal_strength | 🔘 |
-| `sensor.jaalee_xxx_last_seen` | Sensor | timestamp | 🔘 |
+| Entity                             | Type   | Device Class      | Default |
+|------------------------------------|--------|-------------------|---------|
+| `sensor.jaalee_xxx_temperature`   | Sensor | `temperature`     | ✅      |
+| `sensor.jaalee_xxx_humidity`      | Sensor | `humidity`        | ✅      |
+| `sensor.jaalee_xxx_battery`       | Sensor | `battery`         | ✅      |
+| `sensor.jaalee_xxx_rssi`          | Sensor | `signal_strength` | 🔘      |
+| `sensor.jaalee_xxx_last_seen`     | Sensor | `timestamp`       | 🔘      |
 
 ## Troubleshooting
 
-❌ Keine Sensors in HA?
-→ HA neu starten nach Script-Start
-→ MQTT Logs aktivieren: homeassistant.components.mqtt: debug
+**❌ No sensors/devices appear in Home Assistant**
 
-❌ Discovery Topics fehlen?
-→ Log Level auf DEBUG: logLevel: LOG_LEVELS.DEBUG
-→ MQTT Explorer: homeassistant/sensor/jaalee_*/config
+- Restart Home Assistant once after the script has been started.
+- Verify that the MQTT broker is configured correctly in Home Assistant.
+- Check the script logs for messages like "MQTT connected" and "MQTT Discovery published for: …".
 
-## Logs (DEBUG Mode)
+**❌ Discovery topics missing on the MQTT broker**
+
+- Increase log level to DEBUG in the script:
+
+        logLevel: LOG_LEVELS.DEBUG
+
+- Use an MQTT tool (e.g. MQTT Explorer) to check for topics like  
+`homeassistant/sensor/jaalee_*/config`.
+
+## Logs (DEBUG mode)
 
     [INFO] Jaalee JHT parser initialized (v1.2.1)
     [INFO] MQTT connected
     [INFO] Jaalee JHT found - MAC: c5:c7:14:4d:2b:35 | Temp: 21.5°C | Humidity: 52%
     [INFO] MQTT Discovery published for: c5:c7:14:4d:2b:35
-
+    [WARN] Sensor timeout: c5:c7:14:4d:2b:35 (no data for 305s)
 
 ## License
 
-MIT License - siehe [LICENSE](LICENSE) © 2025 Arend Böhmer
+MIT License – see [LICENSE](LICENSE) © 2025 Arend Böhmer.
 
 ## Repository
 
-[![GitHub Repo](https://github.com/arboeh/jaalee-shelly-mqtt/actions/workflows/ci.yml/badge.svg)](https://github.com/arboeh/jaalee-shelly-mqtt)
+https://github.com/arboeh/jaalee-shelly-mqtt

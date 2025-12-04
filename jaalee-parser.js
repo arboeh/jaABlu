@@ -4,35 +4,11 @@
  * Parses iBeacon-format temperature and humidity data from Jaalee JHT sensors
  * and publishes to Home Assistant via MQTT Auto-Discovery.
  *
- * @version     1.2.1
+ * @version     1.2.2
  * @date        2025-12-04
  * @author      arboeh
- * @email       arend.boehmer@web.de
- * @license     MIT
+ * @license     MIT License
  * @repository  https://github.com/arboeh/jaalee-shelly-mqtt
- *
- * Changelog:
- *   v1.2.1 (2025-12-04)
- *     - Fixed MQTT discovery timing issue by adding connection check before publishing
- *     - Discovery messages now only sent when MQTT is confirmed connected
- *
- *   v1.2.0 (2025-12-03)
- *     - Added per-sensor online/offline status topic (retained) for availability
- *     - Added availability to Home Assistant discovery entities (availability_topic, payloads)
- *     - Implemented sensor timeout monitoring with periodic checker
- *     - Minor logging improvements for BLE parsing and MQTT publishing
- *
- *   v1.1.0 (2025-11-17)
- *     - Added configurable log levels (ERROR, WARN, INFO, DEBUG)
- *     - Fixed Last Seen timestamp format (ISO 8601 UTC)
- *     - Improved sensor detection and parsing
- *     - Added diagnostic entities (Battery always enabled, RSSI/Last Seen optional)
- *
- *   v1.0.0 (2025-11-17)
- *     - Initial release
- *     - Support for Jaalee JHT sensors
- *     - MQTT Auto-Discovery integration
- *     - Multi-sensor support
  */
 
 /******************* LOGGING SYSTEM *******************/

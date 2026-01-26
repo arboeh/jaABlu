@@ -9,7 +9,7 @@
 [![Shelly](https://img.shields.io/badge/Shelly-BLU%20Gateway-00A0E3.svg)](https://shelly.cloud/)
 [![Version](https://img.shields.io/github/v/release/arboeh/jaABlu?color=brightgreen)](https://github.com/arboeh/jaABlu/releases/latest)
 
-Dieses Script liest **Jaalee JHT** BLE Temperatur-/Feuchtigkeitssensoren über **Shelly BLU Gateway** Geräte (als Bluetooth-Proxy) aus und übermittelt die Daten per **MQTT Auto-Discovery** automatisch an **Home Assistant**.
+jaABlu Script liest **Jaalee JHT** BLE Temperatur-/Feuchtigkeitssensoren über **Shelly BLU Gateway** Geräte (als Bluetooth-Proxy) aus und übermittelt die Daten per **MQTT Auto-Discovery** automatisch an **Home Assistant**.
 
 ## Features
 

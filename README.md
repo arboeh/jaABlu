@@ -9,7 +9,7 @@
 [![Shelly](https://img.shields.io/badge/Shelly-BLU%20Gateway-00A0E3.svg)](https://shelly.cloud/)
 [![Version](https://img.shields.io/github/v/release/arboeh/jaABlu?color=brightgreen)](https://github.com/arboeh/jaABlu/releases/latest)
 
-This script reads **Jaalee JHT** BLE temperature and humidity sensors using **Shelly BLU Gateway** devices as Bluetooth proxies and forwards the data to **Home Assistant** via **MQTT Auto-Discovery**.
+jaABlu script reads **Jaalee JHT** BLE temperature and humidity sensors using **Shelly BLU Gateway** devices as Bluetooth proxies and forwards the data to **Home Assistant** via **MQTT Auto-Discovery**.
 
 ## Features
 

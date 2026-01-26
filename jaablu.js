@@ -4,12 +4,16 @@
  * Parses iBeacon-format temperature and humidity data from Jaalee JHT sensors
  * and publishes to Home Assistant via MQTT Auto-Discovery.
  *
- * @version     1.2.2
- * @date        2025-12-04
+ * @version     1.2.3
+ * @date        2026-01-26
  * @author      arboeh
  * @license     MIT License
- * @repository  https://github.com/arboeh/jaalee-shelly-mqtt
+ * @repository  https://github.com/arboeh/jaABlu
  */
+
+/******************* VERSION *******************/
+const VERSION = '1.2.3';
+/******************* END VERSION *******************/
 
 /******************* LOGGING SYSTEM *******************/
 const LOG_LEVELS = {
@@ -57,12 +61,12 @@ const CONFIG = {
   // Log levels: ERROR=0, WARN=1, INFO=2, DEBUG=3
   // INFO: Shows important events (sensor found, MQTT status, etc.)
   // DEBUG: Shows all BLE scans and detailed information
-  logLevel: LOG_LEVELS.WARN,
+  logLevel: LOG_LEVELS.INFO,
 
   mqtt: {
     enabled: true,
     discovery_prefix: 'homeassistant', // Standard HA Discovery Prefix
-    device_prefix: 'jaalee', // Prefix for MQTT topics
+    device_prefix: 'jaABlu', // Prefix for MQTT topics
 
     // Optional diagnostic sensors (disabled by default, user must enable)
     publish_rssi: true, // Signal strength (RSSI in dBm)
@@ -165,7 +169,7 @@ function publishDiscovery(mac, friendlyName) {
     CONFIG.mqtt.discovery_prefix + '/sensor/' + deviceId + '_temperature/config',
     JSON.stringify(tempConfig),
     0,
-    true
+    true,
   );
 
   // Humidity Sensor Discovery (Primary - always visible)
@@ -187,7 +191,7 @@ function publishDiscovery(mac, friendlyName) {
     CONFIG.mqtt.discovery_prefix + '/sensor/' + deviceId + '_humidity/config',
     JSON.stringify(humiConfig),
     0,
-    true
+    true,
   );
 
   // Battery Sensor Discovery (Diagnostic - always enabled)
@@ -211,7 +215,7 @@ function publishDiscovery(mac, friendlyName) {
     CONFIG.mqtt.discovery_prefix + '/sensor/' + deviceId + '_battery/config',
     JSON.stringify(battConfig),
     0,
-    true
+    true,
   );
 
   // RSSI Sensor Discovery (Diagnostic - optional, disabled by default)
@@ -236,7 +240,7 @@ function publishDiscovery(mac, friendlyName) {
       CONFIG.mqtt.discovery_prefix + '/sensor/' + deviceId + '_rssi/config',
       JSON.stringify(rssiConfig),
       0,
-      true
+      true,
     );
   }
 
@@ -260,7 +264,7 @@ function publishDiscovery(mac, friendlyName) {
       CONFIG.mqtt.discovery_prefix + '/sensor/' + deviceId + '_last_seen/config',
       JSON.stringify(lastSeenConfig),
       0,
-      true
+      true,
     );
   }
 
@@ -527,12 +531,12 @@ function JaaleeScanCallback(event, result) {
         '°C' +
         ' | Humidity: ' +
         parsed.humidity +
-        '%'
+        '%',
     );
 
     // Debug: Detailed information
     LOGGER.debug(
-      'Battery: ' + parsed.battery + '% | ' + 'RSSI: ' + parsed.rssi + 'dBm | ' + 'Format: ' + parsed.format
+      'Battery: ' + parsed.battery + '% | ' + 'RSSI: ' + parsed.rssi + 'dBm | ' + 'Format: ' + parsed.format,
     );
 
     emitJaaleeData(parsed);
@@ -584,12 +588,12 @@ function init() {
     LOGGER.level === LOG_LEVELS.DEBUG
       ? 'DEBUG'
       : LOGGER.level === LOG_LEVELS.INFO
-      ? 'INFO'
-      : LOGGER.level === LOG_LEVELS.WARN
-      ? 'WARN'
-      : 'ERROR';
+        ? 'INFO'
+        : LOGGER.level === LOG_LEVELS.WARN
+          ? 'WARN'
+          : 'ERROR';
 
-  LOGGER.info('Jaalee JHT parser initialized (v1.1.0)');
+  LOGGER.info('jaABlu parser initialized (v' + VERSION + ')');
   LOGGER.info('Log level: ' + levelName);
   LOGGER.info('Optional sensors - RSSI: ' + CONFIG.mqtt.publish_rssi + ', Last Seen: ' + CONFIG.mqtt.publish_last_seen);
 }

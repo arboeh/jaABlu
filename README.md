@@ -1,11 +1,11 @@
-# Jaalee JHT BLE → Home Assistant via Shelly BLU Gateway & MQTT
+# jaABlu | Jaalee JHT BLE → Home Assistant via Shelly BLU Gateway & MQTT
 
 ## 🌐 [🇩🇪 Deutsche Version](README.de.md) | [🇬🇧 English](README.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Compatible-41BDF5.svg)](https://www.home-assistant.io/)
 [![Shelly](https://img.shields.io/badge/Shelly-BLU%20Gateway-00A0E3.svg)](https://shelly.cloud/)
-[![Version](https://img.shields.io/github/v/release/arboeh/jaalee-shelly-mqtt?color=brightgreen)](https://github.com/arboeh/jaalee-shelly-mqtt/releases/latest)
+[![Version](https://img.shields.io/github/v/release/arboeh/jaABlu?color=brightgreen)](https://github.com/arboeh/jaABlu/releases/latest)
 
 This script reads **Jaalee JHT** BLE temperature and humidity sensors using **Shelly BLU Gateway** devices as Bluetooth proxies and forwards the data to **Home Assistant** via **MQTT Auto-Discovery**.
 
@@ -34,16 +34,13 @@ This script reads **Jaalee JHT** BLE temperature and humidity sensors using **Sh
    - Enable the script
 
 2. **Enable Bluetooth on the Shelly**
-
    - `Settings → Bluetooth → Enable`
 
 3. **Start the script**
-
    - `Settings → Scripts → jaalee-parser.js → Start`
    - Optionally enable autostart for the script
 
 4. **Verify in Home Assistant**
-
    - After a few seconds, new devices should appear under  
      `Settings → Devices & Services → MQTT`.
    - Each Jaalee sensor will expose several entities (Temperature, Humidity, Battery, etc.).
@@ -65,13 +62,13 @@ The script can be configured through the `CONFIG` object:
 
 ## Home Assistant Entities
 
-| Entity                             | Type   | Device Class      | Default |
-|------------------------------------|--------|-------------------|---------|
-| `sensor.jaalee_xxx_temperature`   | Sensor | `temperature`     | ✅      |
-| `sensor.jaalee_xxx_humidity`      | Sensor | `humidity`        | ✅      |
-| `sensor.jaalee_xxx_battery`       | Sensor | `battery`         | ✅      |
-| `sensor.jaalee_xxx_rssi`          | Sensor | `signal_strength` | 🔘      |
-| `sensor.jaalee_xxx_last_seen`     | Sensor | `timestamp`       | 🔘      |
+| Entity                          | Type   | Device Class      | Default |
+| ------------------------------- | ------ | ----------------- | ------- |
+| `sensor.jaalee_xxx_temperature` | Sensor | `temperature`     | ✅      |
+| `sensor.jaalee_xxx_humidity`    | Sensor | `humidity`        | ✅      |
+| `sensor.jaalee_xxx_battery`     | Sensor | `battery`         | ✅      |
+| `sensor.jaalee_xxx_rssi`        | Sensor | `signal_strength` | 🔘      |
+| `sensor.jaalee_xxx_last_seen`   | Sensor | `timestamp`       | 🔘      |
 
 ## Troubleshooting
 
@@ -101,8 +98,8 @@ The script can be configured through the `CONFIG` object:
 
 ## License
 
-MIT License – see [LICENSE](LICENSE) © 2025 Arend Böhmer.
+MIT License – see [LICENSE](LICENSE) © 2026 Arend Böhmer.
 
 ## Repository
 
-https://github.com/arboeh/jaalee-shelly-mqtt
+[https://github.com/arboeh/jaABlu](https://github.com/arboeh/jaABlu)

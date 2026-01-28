@@ -1,8 +1,15 @@
-# jaABlu
+<svg width="150" height="40" xmlns="http://www.w3.org/2000/svg">
+  <text x="0" y="30" font-size="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-weight="600" letter-spacing="-1">
+    <tspan fill="#24292f">ja</tspan>
+    <tspan fill="#d35400" font-weight="700" dx="-6">A</tspan>
+    <tspan fill="#555555" font-weight="700" dx="-8">B</tspan>
+    <tspan fill="#24292f" dx="-7">lu</tspan>
+  </text>
+</svg>
 
-## Jaalee JHT BLE → Shelly BLU Gateway → Home Assistant MQTT + Auto Discovery
+### Jaalee JHT BLE → Shelly BLU Gateway → Home Assistant MQTT + Auto Discovery
 
-#### 🌐 [🇩🇪 Deutsche Version](README.de.md) | [🇬🇧 English Version](README.md)
+[🇬🇧 English](README.md) | 🇩🇪 **Deutsch**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Compatible-41BDF5.svg)](https://www.home-assistant.io/)

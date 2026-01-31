@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.3.1] - 2026-01-31
+
+### Added
+
+- Comprehensive unit test suite with 37 test cases
+- Test coverage: 100% statement coverage, 96.66% branch coverage
+- Testable core module (`jaABlu-core.js`) for Node.js compatibility
+- GitHub Actions CI/CD pipeline for automated testing
+- NPM test scripts (`test`, `test:watch`, `coverage`)
+- Development documentation in README files
+
+### Changed
+
+- Updated README.md and README.de.md with development section
+- Added test badges to README files
+- Improved `.gitignore` for Node.js projects
+
 ## [1.3.0] - 2026-01-27
 
 ### Added

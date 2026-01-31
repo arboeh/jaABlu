@@ -5,7 +5,9 @@
 🇬🇧 English | [🇩🇪 **Deutsch**](README.de.md)
 
 [![Version](https://img.shields.io/github/v/release/arboeh/jaABlu?color=brightgreen)](https://github.com/arboeh/jaABlu/releases/latest)
+[![Tests](https://github.com/arboeh/jaABlu/workflows/Tests/badge.svg)](https://github.com/arboeh/jaABlu/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Compatible-41BDF5.svg)](https://www.home-assistant.io/)
 [![Shelly](https://img.shields.io/badge/Shelly-BLU%20Gateway-00A0E3.svg)](https://shelly.cloud/)
 
@@ -191,6 +193,47 @@ Monitor the freshness of sensor data - useful for diagnostics and timeout monito
 [INFO] jaABlu v1.3.0: Optional sensors enabled: RSSI, Last Seen, Link Quality, Battery Low, Data Age      08:58:43
 [INFO] jaABlu v1.3.0: Jaalee JHT found - MAC: XX:XX:XX:XX:XX:XX | Temp: 0.58°C | Humidity: 92.01%         08:58:44
 [INFO] jaABlu v1.3.0: MQTT Discovery published for: XX:XX:XX:XX:XX:XX                                     08:58:52
+```
+
+## Development
+
+### Running Tests
+
+jaABlu includes a comprehensive test suite with 37 unit tests covering all core functionality.
+
+```bash
+# Install dependencies
+npm install
+
+# Run all tests
+npm test
+
+# Run tests in watch mode (auto-rerun on changes)
+npm run test:watch
+
+# Generate coverage report
+npm run coverage
+```
+
+### Test Coverage
+
+- ✅ **37 test cases** covering helper functions, BLE parsing, and edge cases
+- ✅ **100% statement coverage**
+- ✅ **96.66% branch coverage**
+- ✅ **Continuous Integration** via GitHub Actions
+
+### Project Structure
+
+```
+jaABlu/
+├── .github/workflows/
+│   └── test.yml           # CI/CD pipeline
+├── test/
+│   └── jaABlu.test.js     # Unit tests
+├── jaABlu-core.js         # Testable core module
+├── jaABlu.js              # Production Shelly script
+├── package.json           # NPM configuration
+└── README.md              # Documentation
 ```
 
 ## License

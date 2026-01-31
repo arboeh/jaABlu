@@ -4,7 +4,7 @@
  * Parses iBeacon-format temperature and humidity data from Jaalee JHT sensors
  * and publishes to Home Assistant via MQTT Auto-Discovery.
  *
- * @version     1.3.0
+ * @version     1.3.1
  * @date        2026-01-27
  * @author      arboeh
  * @license     MIT License
@@ -12,7 +12,7 @@
  */
 
 /******************* VERSION *******************/
-const VERSION = '1.3.0';
+const VERSION = '1.3.1';
 /******************* END VERSION *******************/
 
 /******************* LOGGING SYSTEM *******************/

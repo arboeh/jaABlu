@@ -5,7 +5,9 @@
 [🇬🇧 English](README.md) | 🇩🇪 **Deutsch**
 
 [![Version](https://img.shields.io/github/v/release/arboeh/jaABlu?color=brightgreen)](https://github.com/arboeh/jaABlu/releases/latest)
+[![Tests](https://github.com/arboeh/jaABlu/workflows/Tests/badge.svg)](https://github.com/arboeh/jaABlu/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Compatible-41BDF5.svg)](https://www.home-assistant.io/)
 [![Shelly](https://img.shields.io/badge/Shelly-BLU%20Gateway-00A0E3.svg)](https://shelly.cloud/)
 
@@ -80,7 +82,7 @@ const CONFIG = {
 
   knownDevices: {
     // Optional: Format: "mac-address": "friendly_name"
-    // 'XX:XX:XX:XX:XX:XX': 'Jaalee JHT Kitchen',
+    // 'XX:XX:XX:XX:XX:XX': 'Jaalee JHT Küche',
   },
 };
 ```
@@ -170,7 +172,7 @@ automation:
 - Mit einem MQTT-Tool (z.B. MQTT Explorer) prüfen, ob Topics wie
 
   ```
-  homeassistant/sensor/jaAblu_*/config
+  homeassistant/sensor/jaABlu_*/config
   ```
 
   vorhanden sind.
@@ -193,6 +195,47 @@ automation:
 [INFO] jaABlu v1.3.0: Optional sensors enabled: RSSI, Last Seen, Link Quality, Battery Low, Data Age      08:58:43
 [INFO] jaABlu v1.3.0: Jaalee JHT found - MAC: XX:XX:XX:XX:XX:XX | Temp: 0.58°C | Humidity: 92.01%         08:58:44
 [INFO] jaABlu v1.3.0: MQTT Discovery published for: XX:XX:XX:XX:XX:XX                                     08:58:52
+```
+
+## Entwicklung
+
+### Tests ausführen
+
+jaABlu enthält eine umfassende Test-Suite mit 37 Unit-Tests für alle Kernfunktionen.
+
+```bash
+# Dependencies installieren
+npm install
+
+# Alle Tests ausführen
+npm test
+
+# Tests im Watch-Mode (automatisch bei Änderungen)
+npm run test:watch
+
+# Coverage-Report generieren
+npm run coverage
+```
+
+### Test-Abdeckung
+
+- ✅ **37 Testfälle** für Helper-Funktionen, BLE-Parsing und Edge-Cases
+- ✅ **100% Statement Coverage**
+- ✅ **96,66% Branch Coverage**
+- ✅ **Continuous Integration** via GitHub Actions
+
+### Projekt-Struktur
+
+```
+jaABlu/
+├── .github/workflows/
+│   └── test.yml           # CI/CD Pipeline
+├── test/
+│   └── jaABlu.test.js     # Unit Tests
+├── jaABlu-core.js         # Testbares Core-Modul
+├── jaABlu.js              # Produktions-Script für Shelly
+├── package.json           # NPM-Konfiguration
+└── README.md              # Dokumentation
 ```
 
 ## Lizenz

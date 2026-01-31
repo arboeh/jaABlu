@@ -6,10 +6,12 @@
 
 [![Version](https://img.shields.io/github/v/release/arboeh/jaABlu?color=brightgreen)](https://github.com/arboeh/jaABlu/releases/latest)
 [![Tests](https://github.com/arboeh/jaABlu/workflows/Tests/badge.svg)](https://github.com/arboeh/jaABlu/actions)
+[![codecov](https://codecov.io/gh/arboeh/jaABlu/branch/main/graph/badge.svg)](https://codecov.io/gh/arboeh/jaABlu)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Compatible-41BDF5.svg)](https://www.home-assistant.io/)
 [![Shelly](https://img.shields.io/badge/Shelly-BLU%20Gateway-00A0E3.svg)](https://shelly.cloud/)
+
 
 The jaABlu script reads **Jaalee JHT** BLE temperature and humidity sensors using **Shelly BLU Gateway** devices as Bluetooth proxies and forwards the data to **Home Assistant** via **MQTT Auto-Discovery**.
 

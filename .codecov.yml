@@ -1,0 +1,23 @@
+# .codecov.yml
+coverage:
+  precision: 2
+  round: down
+  range: 70..100
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+
+ignore:
+  - 'test/'
+  - '*.test.js'
+  - 'node_modules/'
+
+comment:
+  layout: 'reach,diff,flags,tree'
+  behavior: default
+  require_changes: false
